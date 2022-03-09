@@ -1,3 +1,3 @@
-# WD301 Milestone Collection
+### Final Result!
 
-A Collection of milestone projects for the WD301 Course! 
+![](images/screenshot.png)
