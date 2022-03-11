@@ -1,43 +1,26 @@
-import Header from './Header'
+import { useState } from 'react';
+import Form from './Form';
 import AppContainer from './AppContainer';
+import { Home } from './Home';
 
-const formFields = [
-  {
-    field: "firstname",
-    label: "first name",
-  },
-  {
-    field: "lastname",
-    label: "last name",
-  },
-  {
-    field: "email",
-    label: "email",
-    type: "email"
-  },
-  {
-    field: "dob",
-    label: "date of birth",
-    type: "date"
-  },
-  {
-    field: "tel",
-    label: "phone number",
-    type: "tel"
-  }
-]
 
 function App() {
+
+  const [formOpen, setFormOpen] = useState(false)
+
+  const openForm = () => {
+    setFormOpen(true);
+  }
+
+  const closeForm = () => {
+    setFormOpen(false);
+  }
+
   return (
     <AppContainer>
-      <Header 
-        title={"welcome to lesson 5 of #react-typescript with #tailwindcss"}
-      />
-      {formFields.map(field => <div key={field.field}>
-        <label className="font-semibold capitalize">{field.label}</label>
-        <input type={field.type ?? "text"} className="border-2 border-gray-200 rounded-lg p-2 w-full"/>
-      </div>)}
-      <input type="submit" value="Submit" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-fit p-2 active:shadow-none" />
+      {
+        !formOpen ? <Home openFormCB={openForm}/> : <Form closeFormCB={closeForm}/>
+      }
     </AppContainer>
   );
 }
