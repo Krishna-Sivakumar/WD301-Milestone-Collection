@@ -8,7 +8,7 @@ interface Field {
 
 export default function LabelledInput(props: {field: Field, removeFieldCB: (id: number) => void, mutateFieldCB: (id: number, value: string) => void}) {
     return (
-        <div key={props.field.id}>
+        <div>
             <label className="font-semibold capitalize">{props.field.label}</label>
             <div className="flex gap-2 items-center">
                 <input

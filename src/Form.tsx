@@ -4,6 +4,7 @@ import Field from "./interfaces/Field";
 import Header from "./Header"
 import Cancel from "./cancel.svg";
 import LabelledInput from "./components/LabelledInput"
+import { getLocalForms, saveLocalForms } from "./State";
 
 interface FormData {
     id: number,
@@ -47,19 +48,25 @@ const formData: FormData = {
     fields: formFields,
 }
 
-
-const initialState: () => FormData = () => {
-    const formDataJSON = localStorage.getItem("formData");
-    const persistentFormData: FormData = formDataJSON ? JSON.parse(formDataJSON) : formData;
-    return persistentFormData;
+const initialState: (id?: number) => FormData = (id?: number) => {
+    const localForms = getLocalForms();
+    if (localForms.length > 0 && id !== 0) {
+        return localForms.filter(form => form.id === id)[0];
+    }
+    saveLocalForms([...localForms, formData]);
+    return formData;
 }
 
 const saveForm = (currentState: FormData) => {
-    localStorage.setItem("formData", JSON.stringify(currentState))
+    const localForms = getLocalForms();
+    const updatedLocalForms = localForms.map(form => (
+        form.id === currentState.id ? currentState : form
+    ));
+    saveLocalForms(updatedLocalForms);
 }
 
-export default function Form(props: {closeFormCB: () => void}) {
-    const [formState, setFormState] = useState(initialState());
+export default function Form(props: {closeFormCB: () => void, id?: number}) {
+    const [formState, setFormState] = useState(() => initialState(props.id ? props.id : formData.id));
     const [newField, setNewField] = useState({
         label: "",
         type: ""
@@ -68,12 +75,12 @@ export default function Form(props: {closeFormCB: () => void}) {
 
     useEffect(() => {
         const oldTitle = document.title;
-        document.title = `${oldTitle} | Form Editor`;
+        document.title = `${oldTitle} | ${formState.title}`;
 
         return () => {
             document.title = oldTitle;
         }
-    }, [])
+    }, [formState.title])
 
     useEffect(() => {
         let timeout = setTimeout(() => {
@@ -128,6 +135,15 @@ export default function Form(props: {closeFormCB: () => void}) {
         });
     }
 
+    const mutateTitle = (value: string) => {
+        setFormState(
+            oldState => ({
+                    ...oldState,
+                    title: value,
+            })
+        )
+    }
+
     const clearForm = () => {
         setFormState(oldState => {
             return {
@@ -142,14 +158,15 @@ export default function Form(props: {closeFormCB: () => void}) {
             <button onClick={props.closeFormCB} className="bg-red-500 rounded-full shadow-2xl w-fit p-1 active:brightness-75 hover:brightness-95 float-right ml-auto">
                 <img src={Cancel} className="w-4 h-4" alt="close form"/>
             </button>
-            <Header 
+            <Header
             title={formState.title}
+            mutateTitleCB={mutateTitle}
             />
 
             {
                 formState.fields.map(
                     field =>
-                    <LabelledInput field={field} removeFieldCB={removeField} mutateFieldCB={mutateField} />
+                    <LabelledInput key={field.id} field={field} removeFieldCB={removeField} mutateFieldCB={mutateField} />
                 )
             }
 

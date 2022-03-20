@@ -6,9 +6,11 @@ import { Home } from './components/Home';
 
 function App() {
 
-  const [formOpen, setFormOpen] = useState(false)
+  const [formOpen, setFormOpen] = useState(false);
+  const [formId, setFormId] = useState(0);
 
-  const openForm = () => {
+  const openForm = (id: number) => {
+    setFormId(id);
     setFormOpen(true);
   }
 
@@ -19,7 +21,7 @@ function App() {
   return (
     <AppContainer>
       {
-        !formOpen ? <Home openFormCB={openForm}/> : <Form closeFormCB={closeForm}/>
+        !formOpen ? <Home openFormCB={openForm}/> : <Form id={formId} closeFormCB={closeForm}/>
       }
     </AppContainer>
   );
