@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import Field from "../interfaces/Field";
 
 import LabelledInput from "./LabelledInput";
@@ -87,11 +87,6 @@ function Paginator(props: {id: number, fields: Field[], current: number}) {
 export default function Preview(props: {id?: string, page: string}) {
     const id = Number(props.id)
     const [formState, setFormState] = useState(() => initialState(id ? id : formData.id));
-    const [newField, setNewField] = useState({
-        label: "",
-        type: ""
-    });
-    const fieldRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const oldTitle = document.title;
@@ -112,23 +107,6 @@ export default function Preview(props: {id?: string, page: string}) {
             clearTimeout(timeout);
         }
     }, [formState])
-
-    const addField = () => {
-        setFormState({
-            ...formState,
-            fields: [
-                ...formState.fields,
-                {
-                    id: Number(new Date()),
-                    label: newField.label.length ? newField.label : "new field",
-                    type: newField.type.length? newField.type : "text",
-                    value: ""
-                }
-            ]
-        });
-
-        setNewField({label: "", type: ""});
-    };
 
     const removeField = (id: number) => {
         setFormState(
@@ -153,24 +131,6 @@ export default function Preview(props: {id?: string, page: string}) {
                 ].sort((a, b) => a.id - b.id)
             }
         });
-    }
-
-    const mutateTitle = (value: string) => {
-        setFormState(
-            oldState => ({
-                    ...oldState,
-                    title: value,
-            })
-        )
-    }
-
-    const clearForm = () => {
-        setFormState(oldState => {
-            return {
-                ...oldState,
-                fields: oldState.fields.map(field => ({...field, value: ""}))
-            };
-        })
     }
 
     const currentField = formState.fields[Number(props.page)];

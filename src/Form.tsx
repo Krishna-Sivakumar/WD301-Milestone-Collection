@@ -3,7 +3,6 @@ import Field from "./interfaces/Field";
 
 import Header from "./components/Header"
 import Cancel from "./cancel.svg";
-import LabelledInput from "./components/LabelledInput"
 import { getLocalForms, saveLocalForms } from "./State";
 import { Link } from "raviger";
 import FieldInput from "./components/FieldInput";

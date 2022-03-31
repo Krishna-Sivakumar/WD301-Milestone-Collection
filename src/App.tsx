@@ -2,7 +2,7 @@ import Form from './Form';
 import AppContainer from './AppContainer';
 import { Home } from './components/Home';
 
-import { navigate, useRoutes } from "raviger";
+import { useRoutes } from "raviger";
 import Preview from './components/Preview';
 
 function App() {
