@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from "react"
-import Field from "./interfaces/Field";
+import Field from "../interfaces/Field";
 
-import Header from "./components/Header"
-import Cancel from "./cancel.svg";
-import LabelledInput from "./components/LabelledInput"
-import { getLocalForms, saveLocalForms } from "./State";
+import LabelledInput from "./LabelledInput";
+import Cancel from "../cancel.svg";
+import { getLocalForms, saveLocalForms } from "../State";
 import { Link } from "raviger";
-import FieldInput from "./components/FieldInput";
 
 interface FormData {
     id: number,
@@ -67,7 +65,26 @@ const saveForm = (currentState: FormData) => {
     saveLocalForms(updatedLocalForms);
 }
 
-export default function Form(props: {id?: string}) {
+function Paginator(props: {id: number, fields: Field[], current: number}) {
+    return (
+        <div className="flex rounded-lg shadow-lg">
+            {
+                (props.current > 0) ?
+                <Link className="bg-slate-300 rounded-l-lg p-2 text-slate-700 font-bold border-r-2 border-r-slate-400" href={`/preview/${props.id}/${props.current-1}`}> Previous </Link>
+                : <p className="bg-slate-300 rounded-l-lg p-2 text-slate-400 font-bold border-r-2 border-r-slate-400">Previous</p>
+            }
+            {
+                (props.current < props.fields.length - 1) ?
+                <Link className="bg-slate-300 rounded-r-lg p-2 text-slate-700 font-bold" href={`/preview/${props.id}/${props.current+1}`}> Next </Link> :
+                <p className="bg-slate-300 rounded-r-lg p-2 text-slate-400 font-bold">
+                    Next
+                </p>
+            }
+        </div>
+    )
+}
+
+export default function Preview(props: {id?: string, page: string}) {
     const id = Number(props.id)
     const [formState, setFormState] = useState(() => initialState(id ? id : formData.id));
     const [newField, setNewField] = useState({
@@ -122,27 +139,20 @@ export default function Form(props: {id?: string}) {
         )
     };
 
-    const mutateField = (param: string) => {
-        return (id: number, value: string) => {
-            setFormState(oldState => {
-                let field: Field = oldState.fields.filter(field => field.id === id)[0];
-
-                const newField: Field = {
-                    id: field.id,
-                    value: param === "value" ? value : field.value,
-                    label: param === "label" ? value : field.label,
-                    type: param === "type" ? value : field.type
-                }
-
-                return {
-                    ...oldState,
-                    fields: [
-                        ...oldState.fields.filter(field => field.id !== id),
-                        newField
-                    ].sort((a, b) => a.id - b.id)
-                }
-            });
-        }
+    const mutateField = (id: number, value: string) => {
+        setFormState(oldState => {
+            let field: Field = oldState.fields.filter(field => field.id === id)[0];
+            return {
+                ...oldState,
+                fields: [
+                    ...oldState.fields.filter(field => field.id !== id),
+                    {
+                        ...field,
+                        value: value
+                    }
+                ].sort((a, b) => a.id - b.id)
+            }
+        });
     }
 
     const mutateTitle = (value: string) => {
@@ -163,52 +173,22 @@ export default function Form(props: {id?: string}) {
         })
     }
 
+    const currentField = formState.fields[Number(props.page)];
+
     return (
         <>
             <Link href="/" className="bg-red-500 rounded-full shadow-2xl w-fit p-1 active:brightness-75 hover:brightness-95 float-right ml-auto">
                 <img src={Cancel} className="w-4 h-4" alt="close form"/>
             </Link>
-            <Header
-                title={formState.title}
-                mutateTitleCB={mutateTitle}
-                id={id}
-            />
 
-            {
-                formState.fields.map(
-                    field => <FieldInput key={field.id} field={field} mutateFieldNameCB={mutateField("label")} mutateFieldTypeCB={mutateField("type")} removeFieldCB={removeField}/>
-                )
-            }
-
-            <div className="flex gap-2 mt-8">
-                <input
-                    type="text"
-                    value={newField.label}
-                    ref={fieldRef}
-                    onChange={e => setNewField({
-                            ...newField,
-                            label: e.target.value
-                        })
-                    }
-                    className="border-2 border-gray-200 rounded-lg p-2 w-full"
-                    placeholder="Label"
-                />
-                <input
-                    type="text"
-                    value={newField.type}
-                    onChange={e => setNewField({
-                            ...newField,
-                            type: e.target.value
-                        })
-                    }
-                    className="border-2 border-gray-200 rounded-lg p-2 w-full"
-                    placeholder="Type"
-                />
-                <input type="button" value="Add Field" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-fit p-2 active:brightness-75 hover:brightness-95" onClick={addField} />
+            <div className="flex gap-2 items-center">
+                <p className="w-full font-bold text-2xl">{formState.title}</p>
             </div>
-            <div className="flex gap-2">
-                <input type="button" value="clear form" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-full p-2 active:brightness-75 hover:brightness-95 capitalize" onClick={clearForm} />
-                <input type="button" value="submit" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-full p-2 active:brightness-75 hover:brightness-95 capitalize" onClick={() => {saveForm(formState); fieldRef.current?.focus()}} />
+
+            <div className="flex flex-col items-start gap-4">
+                <LabelledInput key={currentField.id} field={currentField} removeFieldCB={removeField} mutateFieldCB={mutateField}/>
+
+                <Paginator fields={formState.fields} id={id} current={Number(props.page)}/>
             </div>
         </>
     );

@@ -3,10 +3,15 @@ import FormData from "../interfaces/FormData";
 import BinIcon from "../icons/BinIcon";
 import OpenIcon from "../icons/OpenIcon";
 import { getLocalForms, saveLocalForms } from "../State";
+import { Link, useQueryParams } from "raviger";
 
-export function Home(props: {openFormCB: (id: number) => void}) {
+export function Home() {
 
     const [state, setState] = useState(() => getLocalForms())
+    const [searchString, setSearchString] = useState("");
+
+    const [queryParams, setQueryParams] = useQueryParams();
+    const {search=""} = queryParams;
 
     const addLocalForm = () => {
         const newForm: FormData = {
@@ -30,19 +35,28 @@ export function Home(props: {openFormCB: (id: number) => void}) {
         setState(getLocalForms());
     }
 
+    const filteredState = search ? state.filter(form => form.title.toLowerCase().indexOf(search.toLowerCase()) !== -1) : state;
+
     return (
         <div className="flex flex-col gap-3">
-            {state.map(
+            <form action="" method="GET" className="flex gap-3" onSubmit={e => {
+                e.preventDefault();
+                setQueryParams({search: searchString});
+            }}>
+                <input value={searchString} onChange={e => setSearchString(e.target.value)} type="text" name="search" className="grow border-2 border-gray-100 rounded-lg p-2"/>
+                <input type="submit" className="capitalize text-white font-bold bg-gradient-to-r from-blue-500 to-blue-700 p-2 rounded-lg" value="filter" />
+            </form>
+            {filteredState.map(
                 form => (
                     <div className="flex gap-2 items-center" key={form.id}>
                         <span className="font-bold mr-auto">{form.title}</span>
-                        <button
+                        <Link
                             className = "bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-fit active:brightness-75 hover:brightness-95 p-2 flex items-center gap-2 capitalize"
-                            onClick={() => props.openFormCB(form.id)}
+                            href = {`/form/${form.id}`}
                         >
                             <OpenIcon/>
                             open
-                        </button>
+                        </Link>
                         <button
                             className = "bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow-xl text-white font-bold active:brightness-75 hover:brightness-95 p-2 flex items-center gap-2 capitalize"
                             onClick={() => removeLocalForm(form.id)}

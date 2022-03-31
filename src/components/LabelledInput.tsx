@@ -6,7 +6,7 @@ interface Field {
     value?: string
 };
 
-export default function LabelledInput(props: {field: Field, removeFieldCB: (id: number) => void, mutateFieldCB: (id: number, value: string) => void}) {
+export default function LabelledInput(props: {canRemove?: boolean, field: Field, removeFieldCB: (id: number) => void, mutateFieldCB: (id: number, value: string) => void}) {
     return (
         <div>
             <label className="font-semibold capitalize">{props.field.label}</label>
@@ -19,12 +19,12 @@ export default function LabelledInput(props: {field: Field, removeFieldCB: (id: 
                         props.mutateFieldCB(props.field.id, e.target.value)
                     }}
                 />
-                <input
+                { props.canRemove && <input
                     type="button"
                     value="Remove"
                     onClick={() => props.removeFieldCB(props.field.id)}
                     className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-fit p-2 active:brightness-75 hover:brightness-95"
-                />
+                />}
             </div>
         </div>
     );
