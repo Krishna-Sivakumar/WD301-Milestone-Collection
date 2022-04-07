@@ -162,7 +162,7 @@ export default function Form(props: {id?: string}) {
 
     const hasPreview = formState.fields.length > 0;
 
-    if (formState.fields.length === 0)
+    if (formState.id === 0)
         return (
             <>
                 <Link href="/" className="bg-red-500 rounded-full shadow-2xl w-fit p-1 active:brightness-75 hover:brightness-95 float-right ml-auto">
@@ -205,17 +205,21 @@ export default function Form(props: {id?: string}) {
                     className="border-2 border-gray-200 rounded-lg p-2 w-full"
                     placeholder="Label"
                 />
-                <input
-                    type="text"
+                <select
                     value={newField.type}
                     onChange={e => setNewField({
-                            ...newField,
-                            type: e.target.value
-                        })
-                    }
+                        ...newField,
+                        type: e.target.value
+                    })}
                     className="border-2 border-gray-200 rounded-lg p-2 w-full"
                     placeholder="Type"
-                />
+                >
+                    <option value="text">text</option>
+                    <option value="date">date</option>
+                    <option value="time">time</option>
+                    <option value="datetime-local">date and time</option>
+                    <option value="number">number</option>
+                </select>
                 <input type="button" value="Add Field" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-fit p-2 active:brightness-75 hover:brightness-95" onClick={addField} />
             </div>
             <div className="flex gap-2">

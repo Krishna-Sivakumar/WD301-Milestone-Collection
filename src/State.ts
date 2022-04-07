@@ -46,7 +46,7 @@ export const previewState: (id: number) => FormData = (id: number) => {
     }, {});
 
     const preview: FormData = {
-        ...oldPreview,
+        ...formSchema,
         fields: formSchema.fields.map(field => ({
             ...field,
             value: prefilledValueSet[field.id] ?? "" // if field is already filled in preview, use that value. Else keep it blank.
