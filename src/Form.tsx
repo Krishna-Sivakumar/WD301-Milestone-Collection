@@ -50,9 +50,16 @@ const formData: FormData = {
 }
 
 const initialState: (id?: number) => FormData = (id?: number) => {
+
+    const empty : FormData = {
+        id: 0,
+        title: "",
+        fields: []
+    }
+
     const localForms = getLocalForms();
     if (localForms.length > 0 && id !== 0) {
-        return localForms.filter(form => form.id === id)[0];
+        return localForms.filter(form => form.id === id)[0] ?? empty;
     }
     saveLocalForms([...localForms, formData]);
     return formData;
@@ -153,14 +160,19 @@ export default function Form(props: {id?: string}) {
         )
     }
 
-    const clearForm = () => {
-        setFormState(oldState => {
-            return {
-                ...oldState,
-                fields: oldState.fields.map(field => ({...field, value: ""}))
-            };
-        })
-    }
+    const hasPreview = formState.fields.length > 0;
+
+    if (formState.fields.length === 0)
+        return (
+            <>
+                <Link href="/" className="bg-red-500 rounded-full shadow-2xl w-fit p-1 active:brightness-75 hover:brightness-95 float-right ml-auto">
+                    <img src={Cancel} className="w-4 h-4" alt="close form"/>
+                </Link>
+                <p className="text-2xl text-gray-600 font-bold">
+                    This form doesn't exist.
+                </p>
+            </>
+        )
 
     return (
         <>
@@ -171,6 +183,7 @@ export default function Form(props: {id?: string}) {
                 title={formState.title}
                 mutateTitleCB={mutateTitle}
                 id={id}
+                hasPreview = {hasPreview}
             />
 
             {
@@ -206,7 +219,6 @@ export default function Form(props: {id?: string}) {
                 <input type="button" value="Add Field" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-fit p-2 active:brightness-75 hover:brightness-95" onClick={addField} />
             </div>
             <div className="flex gap-2">
-                <input type="button" value="clear form" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-full p-2 active:brightness-75 hover:brightness-95 capitalize" onClick={clearForm} />
                 <input type="button" value="submit" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-full p-2 active:brightness-75 hover:brightness-95 capitalize" onClick={() => {saveForm(formState); fieldRef.current?.focus()}} />
             </div>
         </>

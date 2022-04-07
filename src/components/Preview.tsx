@@ -3,7 +3,7 @@ import Field from "../interfaces/Field";
 
 import LabelledInput from "./LabelledInput";
 import Cancel from "../cancel.svg";
-import { getLocalForms, saveLocalForms } from "../State";
+import { previewState, getLocalPreviews, saveLocalPreviews } from "../State";
 import { Link } from "raviger";
 
 interface FormData {
@@ -48,21 +48,12 @@ const formData: FormData = {
     fields: formFields,
 }
 
-const initialState: (id?: number) => FormData = (id?: number) => {
-    const localForms = getLocalForms();
-    if (localForms.length > 0 && id !== 0) {
-        return localForms.filter(form => form.id === id)[0];
-    }
-    saveLocalForms([...localForms, formData]);
-    return formData;
-}
-
-const saveForm = (currentState: FormData) => {
-    const localForms = getLocalForms();
-    const updatedLocalForms = localForms.map(form => (
+const savePreview = (currentState: FormData) => {
+    const localPreviews = getLocalPreviews();
+    const updatedLocalPreviews = localPreviews.map(form => (
         form.id === currentState.id ? currentState : form
     ));
-    saveLocalForms(updatedLocalForms);
+    saveLocalPreviews(updatedLocalPreviews);
 }
 
 function Paginator(props: {id: number, fields: Field[], current: number}) {
@@ -84,9 +75,9 @@ function Paginator(props: {id: number, fields: Field[], current: number}) {
     )
 }
 
-export default function Preview(props: {id?: string, page: string}) {
+export default function Preview(props: {id: string, page: string}) {
     const id = Number(props.id)
-    const [formState, setFormState] = useState(() => initialState(id ? id : formData.id));
+    const [formState, setFormState] = useState(() => previewState(id));
 
     useEffect(() => {
         const oldTitle = document.title;
@@ -99,7 +90,7 @@ export default function Preview(props: {id?: string, page: string}) {
 
     useEffect(() => {
         let timeout = setTimeout(() => {
-            saveForm(formState);
+            savePreview(formState);
         }, 200);
 
 
@@ -134,6 +125,15 @@ export default function Preview(props: {id?: string, page: string}) {
     }
 
     const currentField = formState.fields[Number(props.page)];
+
+    if (formState.fields.length === 0)
+        return (
+            <p className="text-2xl text-gray-600 font-bold">
+                This form isn't ready yet.
+                <br/>
+                Please contact the author.
+            </p>
+        )
 
     return (
         <>
