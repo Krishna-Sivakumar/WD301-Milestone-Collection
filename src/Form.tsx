@@ -13,42 +13,6 @@ interface FormData {
     fields: Field[]
 }
 
-const formFields: Field[] = [
-  {
-    id: 1,
-    label: "first name",
-  },
-  {
-    id: 2,
-    label: "last name",
-    value: "",
-  },
-  {
-    id: 3,
-    label: "email",
-    type: "email",
-    value: "",
-  },
-  {
-    id: 4,
-    label: "date of birth",
-    type: "date",
-    value: "",
-  },
-  {
-    id: 5,
-    label: "phone number",
-    type: "tel",
-    value: "",
-  }
-];
-
-const formData: FormData = {
-    id: Number(new Date()),
-    title: "Form",
-    fields: formFields,
-}
-
 const initialState: (id?: number) => FormData = (id?: number) => {
 
     const empty : FormData = {
@@ -58,11 +22,7 @@ const initialState: (id?: number) => FormData = (id?: number) => {
     }
 
     const localForms = getLocalForms();
-    if (localForms.length > 0 && id !== 0) {
-        return localForms.filter(form => form.id === id)[0] ?? empty;
-    }
-    saveLocalForms([...localForms, formData]);
-    return formData;
+    return localForms.filter(form => form.id === id)[0] ?? empty;
 }
 
 const saveForm = (currentState: FormData) => {
@@ -75,10 +35,15 @@ const saveForm = (currentState: FormData) => {
 
 export default function Form(props: {id?: string}) {
     const id = Number(props.id)
-    const [formState, setFormState] = useState(() => initialState(id ? id : formData.id));
-    const [newField, setNewField] = useState({
+    const [formState, setFormState] = useState(() => initialState(id));
+    const [newField, setNewField] = useState<{
+        label: string,
+        type: string,
+        kind: "input" | "radio" | "multi" | "textarea" | "range"
+    }>({
         label: "",
-        type: ""
+        type: "",
+        kind: "input"
     });
     const fieldRef = useRef<HTMLInputElement>(null)
 
@@ -103,20 +68,57 @@ export default function Form(props: {id?: string}) {
     }, [formState])
 
     const addField = () => {
+        const generateField : () => Field = () => {
+
+            const base = {
+                id: Number(new Date()),
+                label: newField.label.length ? newField.label : "new field",
+            }
+            
+            switch (newField.kind) {
+                case "input":
+                    return {
+                        ...base,
+                        kind: "input",
+                        type: newField.type.length ? newField.type : "text",
+                        value: ""
+                    } as Field
+                case "textarea":
+                    return {
+                        ...base,
+                        kind: "textarea",
+                        value: ""
+                    } as Field
+                case "multi":
+                    return {
+                        ...base,
+                        kind: "multi",
+                        options: [],
+                        selected: []
+                    } as Field
+                case "radio":
+                    return {
+                        ...base,
+                        kind: "radio",
+                        options: []
+                    } as Field
+                case "range":
+                    return {
+                        ...base,
+                        kind: "range"
+                    } as Field
+            }
+        }
+
         setFormState({
             ...formState,
             fields: [
                 ...formState.fields,
-                {
-                    id: Number(new Date()),
-                    label: newField.label.length ? newField.label : "new field",
-                    type: newField.type.length? newField.type : "text",
-                    value: ""
-                }
+                generateField()
             ]
         });
 
-        setNewField({label: "", type: ""});
+        setNewField({label: "", type: "", kind: "input"});
     };
 
     const removeField = (id: number) => {
@@ -133,18 +135,39 @@ export default function Form(props: {id?: string}) {
             setFormState(oldState => {
                 let field: Field = oldState.fields.filter(field => field.id === id)[0];
 
-                const newField: Field = {
-                    id: field.id,
-                    value: param === "value" ? value : field.value,
-                    label: param === "label" ? value : field.label,
-                    type: param === "type" ? value : field.type
+                const generateNewField : () => Field = () => {
+                    switch(field.kind) {
+                        case "input": return {
+                            ...field,
+                            value: param === "value" ? value : field.value,
+                            label: param === "label" ? value : field.label,
+                            type: param === "type" ? value : field.type,
+                        }
+                        case "multi": return {
+                            ...field, // todo
+                            label: param === "label" ? value : field.label,
+                        }
+                        case "radio": return {
+                            ...field, // todo
+                            label: param === "label" ? value : field.label,
+                        }
+                        case "range": return {
+                            ...field, // todo
+                            label: param === "label" ? value : field.label,
+                        }
+                        case "textarea": return {
+                            ...field, // todo
+                            value: param === "value" ? value : field.value,
+                            label: param === "label" ? value : field.label,
+                        }
+                    }
                 }
 
                 return {
                     ...oldState,
                     fields: [
                         ...oldState.fields.filter(field => field.id !== id),
-                        newField
+                        generateNewField()
                     ].sort((a, b) => a.id - b.id)
                 }
             });
@@ -188,7 +211,13 @@ export default function Form(props: {id?: string}) {
 
             {
                 formState.fields.map(
-                    field => <FieldInput key={field.id} field={field} mutateFieldNameCB={mutateField("label")} mutateFieldTypeCB={mutateField("type")} removeFieldCB={removeField}/>
+                    field => <FieldInput
+                        key={field.id}
+                        field={field}
+                        mutateFieldNameCB={mutateField("label")}
+                        mutateFieldTypeCB={mutateField("type")}
+                        removeFieldCB={removeField}
+                    />
                 )
             }
 
@@ -206,6 +235,20 @@ export default function Form(props: {id?: string}) {
                     placeholder="Label"
                 />
                 <select
+                    value={newField.kind}
+                    onChange={e => setNewField({
+                        ...newField,
+                        kind: e.target.value as ("input" | "radio" | "multi" | "textarea" | "range")
+                    })}
+                    className="border-2 border-gray-200 rounded-lg p-2 w-full"
+                >
+                    {
+                        ["input", "radio", "textarea", "multi", "range"].map(
+                            ele => <option value={ele}>{ele}</option>
+                        )
+                    }
+                </select>
+                { newField.kind === "input" && <select
                     value={newField.type}
                     onChange={e => setNewField({
                         ...newField,
@@ -219,7 +262,7 @@ export default function Form(props: {id?: string}) {
                     <option value="time">time</option>
                     <option value="datetime-local">date and time</option>
                     <option value="number">number</option>
-                </select>
+                </select>}
                 <input type="button" value="Add Field" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-fit p-2 active:brightness-75 hover:brightness-95" onClick={addField} />
             </div>
             <div className="flex gap-2">

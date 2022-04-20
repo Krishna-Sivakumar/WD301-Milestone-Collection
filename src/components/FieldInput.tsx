@@ -1,9 +1,5 @@
-interface Field {
-    id: number,
-    type?: string,
-    label: string,
-    value?: string
-};
+import Field from "../interfaces/Field"
+import DynamicForm from "../components/DynamicForm"
 
 export default function FieldInput(
     props: {
@@ -14,7 +10,7 @@ export default function FieldInput(
     }
 ) {
     return (
-        <div className="flex gap-4">
+        <div className="grid grid-cols-4 place-items-center gap-4 items-center">
             <input
                 type="text"
                 value={props.field.label}
@@ -24,15 +20,32 @@ export default function FieldInput(
                 }}
                 placeholder="Name"
             />
-            <input
-                type="text"
-                value={props.field.type}
-                className="border-2 border-gray-200 rounded-lg p-2 w-full"
-                onChange={e => {
-                    props.mutateFieldTypeCB(props.field.id, e.target.value)
-                }}
-                placeholder="Type"
-            />
+            {
+                (() => {
+                    switch(props.field.kind) {
+                        case "input":
+                            return (
+                                <select
+                                    value={props.field.type}
+                                    onChange={e => {
+                                        props.mutateFieldTypeCB(props.field.id, e.target.value)
+                                    }}
+                                    className="border-2 border-gray-200 rounded-lg p-2 w-full"
+                                    placeholder="Type"
+                                >
+                                    <option value="text">text</option>
+                                    <option value="date">date</option>
+                                    <option value="time">time</option>
+                                    <option value="datetime-local">date and time</option>
+                                    <option value="number">number</option>
+                                </select>
+                            )
+                        case "radio":
+                            return <DynamicForm fields={props.field.options} setFields={()=>{}} />
+                    }
+                })()
+            }
+            <p>{props.field.kind}</p>
             <input
                     type="button"
                     value="Remove"

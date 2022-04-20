@@ -38,19 +38,43 @@ export const previewState: (id: number) => FormData = (id: number) => {
 
     // Collect filled fields in a hashet
     const prefilledValueSet : Record<number, string> = oldPreview.fields.reduce((prev,  curr) => {
-        const ret : Record<number, string> = {
-            ...prev,
-            [curr.id]: curr.value ?? ""
-        };
-        return ret;
+        switch (curr.kind) {
+            case "range":
+            case "textarea":
+            case "input": 
+                return {
+                    ...prev,
+                    [curr.id]: curr.value ?? ""
+                } as Record<number, string>
+            case "multi":
+            case "radio":
+            default:
+                return {
+                    ...prev,
+                    [curr.id]: curr.options
+                }
+        }
     }, {});
 
     const preview: FormData = {
         ...formSchema,
-        fields: formSchema.fields.map(field => ({
-            ...field,
-            value: prefilledValueSet[field.id] ?? "" // if field is already filled in preview, use that value. Else keep it blank.
-        }))
+        fields: formSchema.fields.map(field => {
+            switch (field.kind) {
+                case "range":
+                case "textarea":
+                case "input": return {
+                    ...field,
+                    value: prefilledValueSet[field.id] ?? "" // if field is already filled in preview, use that value. Else keep it blank.
+                }
+                case "multi": return {
+                    ...field, // todo
+                }
+                default:
+                case "radio": return {
+                    ...field, // todo
+                }
+            }
+        })
     }
 
     saveLocalPreviews([...localPreviews.filter(form => form.id !== preview.id), preview]);

@@ -12,42 +12,6 @@ interface FormData {
     fields: Field[]
 }
 
-const formFields: Field[] = [
-  {
-    id: 1,
-    label: "first name",
-  },
-  {
-    id: 2,
-    label: "last name",
-    value: "",
-  },
-  {
-    id: 3,
-    label: "email",
-    type: "email",
-    value: "",
-  },
-  {
-    id: 4,
-    label: "date of birth",
-    type: "date",
-    value: "",
-  },
-  {
-    id: 5,
-    label: "phone number",
-    type: "tel",
-    value: "",
-  }
-];
-
-const formData: FormData = {
-    id: Number(new Date()),
-    title: "Form",
-    fields: formFields,
-}
-
 const savePreview = (currentState: FormData) => {
     const localPreviews = getLocalPreviews();
     const updatedLocalPreviews = localPreviews.map(form => (
@@ -108,17 +72,23 @@ export default function Preview(props: {id: string, page: string}) {
         )
     };
 
-    const mutateField = (id: number, value: string) => {
+    const mutateField = (id: number, value: string, options?: {id: number, name: string, selected: boolean}[]) => {
         setFormState(oldState => {
             let field: Field = oldState.fields.filter(field => field.id === id)[0];
+
+            const newObj : Field = field.kind === "multi" ? {
+                ...field,
+                options: options ?? field.options
+            } : {
+                ...field,
+                value: value
+            }
+
             return {
                 ...oldState,
                 fields: [
                     ...oldState.fields.filter(field => field.id !== id),
-                    {
-                        ...field,
-                        value: value
-                    }
+                    newObj
                 ].sort((a, b) => a.id - b.id)
             }
         });
