@@ -50,16 +50,20 @@ export default function LabelledInput(props: {
         switch(field.kind) {
             case "range":
                 return (
-                    <input
-                        type="range"
-                        value={field.value}
-                        max={field.max}
-                        min={field.min}
-                        className="w-full"
-                        onChange={
-                            e => props.mutateFieldCB(field.id, e.target.value)
-                        }
-                    />
+                    <div className="flex w-full gap-1">
+                        <span className="font-bold text-slate-600">{field.min}</span>
+                        <input
+                            type="range"
+                            value={field.value}
+                            max={field.max}
+                            min={field.min}
+                            className="w-full"
+                            onChange={
+                                e => props.mutateFieldCB(field.id, e.target.value)
+                            }
+                        />
+                        <span className="font-bold text-slate-600">{field.max}</span>
+                    </div>
                 )
             case "input":
                 return (
@@ -108,7 +112,7 @@ export default function LabelledInput(props: {
     }
 
     return (
-        <div className="w-full">
+        <div className="w-full" key={props.field.id}>
             <label className="font-semibold capitalize">{props.field.label}</label>
             <div className="flex gap-2 items-center">
                 {generateField(props.field)}

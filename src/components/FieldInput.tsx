@@ -10,6 +10,7 @@ export default function FieldInput(
             {kind: "radio", content: string[]} |
             {kind: "multi", content: {id: number, name: string}[]}
         ) => void,
+        mutateRangeCB: (id: number, value: {max?: string, min?: string}) => void,
         removeFieldCB: (id: number) => void
     }
 ) {
@@ -59,12 +60,41 @@ export default function FieldInput(
             </div>
             {
                 (() => {
-                    switch(props.field.kind) {
+                    const field = props.field;
+                    switch(field.kind) {
+                        case "range":
+                            return <details>
+                                <summary>Expand to fill in details</summary>
+                                <div className="flex flex-col w-full gap-2">
+                                    <div className="flex justify-between items-center gap-2">
+                                        <label>Minimum</label>
+                                        <input
+                                            value={field.min}
+                                            onChange={e =>{
+                                                props.mutateRangeCB(props.field.id, {min: e.target.value})
+                                            }}
+                                            className="border-2 border-gray-200 rounded-lg p-2 w-full"
+                                            placeholder="Minimum"
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-center gap-2">
+                                        <label>Maximum</label>
+                                        <input
+                                            value={field.max}
+                                            onChange={e =>{
+                                                props.mutateRangeCB(props.field.id, {max: e.target.value})
+                                            }}
+                                            className="border-2 border-gray-200 rounded-lg p-2 w-full"
+                                            placeholder="Maximum"
+                                        />
+                                    </div>
+                                </div>
+                            </details>
                         case "radio":
                             return <details>
                                 <summary>Expand to fill in options</summary>
                                 <DynamicForm
-                                    fields={props.field.options}
+                                    fields={field.options}
                                     setFields={
                                         (fields: string[]) => 
                                             props.mutateFieldOptionsCB(props.field.id, {kind: "radio", content: fields})
@@ -75,7 +105,7 @@ export default function FieldInput(
                             return <details>
                                 <summary>Expand to fill in options</summary>
                                 <DynamicForm
-                                    fields={props.field.options.map(ele => ele.name)}
+                                    fields={field.options.map(ele => ele.name)}
                                     setFields={
                                         (fields: string[]) => {
                                             props.mutateFieldOptionsCB(

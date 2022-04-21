@@ -105,7 +105,9 @@ export default function Form(props: {id?: string}) {
                 case "range":
                     return {
                         ...base,
-                        kind: "range"
+                        kind: "range",
+                        max: "100",
+                        min: "0"
                     } as Field
             }
         }
@@ -208,6 +210,29 @@ export default function Form(props: {id?: string}) {
         })
     }
 
+    const mutateRangeField = (id: number, value: {max?: string, min?: string}) => {
+        setFormState(oldState => {
+            let field : Field = oldState.fields.filter(field => field.id === id)[0];
+
+            if (field.kind === "range") {
+
+                const newObj = {
+                    ...field,
+                    ...(value.max && {max: value.max}),
+                    ...(value.min && {min: value.min}),
+                }
+
+                return {
+                    ...oldState,
+                    fields: [
+                        ...oldState.fields.filter(field => field.id !== id),
+                        newObj
+                    ].sort((a, b) => a.id - b.id) 
+                } 
+            } else return oldState
+        })
+    }
+
     const mutateTitle = (value: string) => {
         setFormState(
             oldState => ({
@@ -251,6 +276,7 @@ export default function Form(props: {id?: string}) {
                         mutateFieldNameCB={mutateField("label")}
                         mutateFieldTypeCB={mutateField("type")}
                         mutateFieldOptionsCB={mutateFieldOptions}
+                        mutateRangeCB={mutateRangeField}
                         removeFieldCB={removeField}
                     />
                 )
@@ -279,7 +305,7 @@ export default function Form(props: {id?: string}) {
                 >
                     {
                         ["input", "radio", "textarea", "multi", "range"].map(
-                            ele => <option value={ele}>{ele}</option>
+                            ele => <option key={ele} value={ele}>{ele}</option>
                         )
                     }
                 </select>
