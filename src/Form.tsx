@@ -174,6 +174,40 @@ export default function Form(props: {id?: string}) {
         }
     }
 
+    const mutateFieldOptions = (id: number, value:
+        {kind: "radio", content: string[]} |
+        {kind: "multi", content: {id: number, name: string}[]}
+    ) => {
+        setFormState(oldState => {
+            let field: Field = oldState.fields.filter(field => field.id === id)[0];
+
+            const newObj = (() => {
+                switch(field.kind) {
+                    case "multi":
+                        return {
+                            ...field,
+                            options: value.kind === "multi" ? value.content : field.options
+                        }
+                    case "radio":
+                        return {
+                            ...field,
+                            options: value.kind === "radio" ? value.content : field.options
+                        }
+                    default:
+                        return field
+                }
+            })()
+            
+            return {
+                ...oldState,
+                fields: [
+                    ...oldState.fields.filter(field => field.id !== id),
+                    newObj
+                ].sort((a, b) => a.id -  b.id)
+            }
+        })
+    }
+
     const mutateTitle = (value: string) => {
         setFormState(
             oldState => ({
@@ -216,6 +250,7 @@ export default function Form(props: {id?: string}) {
                         field={field}
                         mutateFieldNameCB={mutateField("label")}
                         mutateFieldTypeCB={mutateField("type")}
+                        mutateFieldOptionsCB={mutateFieldOptions}
                         removeFieldCB={removeField}
                     />
                 )

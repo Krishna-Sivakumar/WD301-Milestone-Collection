@@ -1,6 +1,50 @@
-import Field from "../interfaces/Field";
+import { useState } from "react";
+import Field from "../interfaces/Field"
+import {MultiSelectField} from "../interfaces/Field";
 
-export default function LabelledInput(props: {canRemove?: boolean, field: Field, removeFieldCB: (id: number) => void, mutateFieldCB: (id: number, value: string, options?: {id: number, name: string, selected: boolean}[]) => void}) {
+function MultiSelectDropdown(props: {
+    field: MultiSelectField,
+    mutateOptionsCB: (id: number, value: number, checked: boolean) => void
+}) {
+
+    const [open, setOpen] = useState(false)
+
+    return (
+        <div className="flex flex-col w-full">
+            <div className="border-2 border-gray-200 rounded-lg p-2 w-full capitalize flex justify-between" onClick={ e => setOpen(!open) }>
+                {props.field.label}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                </svg>
+            </div>
+            {
+                open && <div className="flex flex-col border-2 border-gray-200 rounded-lg p-2 w-full mt-2">
+                    {
+                        props.field.options.sort((a,b) => a.name.localeCompare(b.name)).map(
+                            option => <div
+                                className="flex items-center hover:bg-blue-600 hover:text-white gap-2 rounded-md p-2"
+                            >
+                                <input type="checkbox" defaultChecked={option.id in props.field.selected} onChange={ e => {
+                                    props.mutateOptionsCB(props.field.id, option.id, e.target.checked)
+                                }}  />
+                                <label>{option.name}</label>
+                            </div>
+                        )
+                    }
+                </div>
+            }
+        </div>
+    )
+}
+
+export default function LabelledInput(props: {
+        canRemove?: boolean,
+        field: Field, 
+        removeFieldCB: (id: number) => void,
+        mutateFieldCB: (id: number, value: string) => void,
+        mutateOptionsCB: (id: number, value: number, checked: boolean) => void
+    },
+    ) {
 
     const generateField = (field : Field) => {
         switch(field.kind) {
@@ -59,28 +103,7 @@ export default function LabelledInput(props: {canRemove?: boolean, field: Field,
                     </fieldset>
                 )
             case "multi":
-                return (
-                    <fieldset className="grid grid-cos-2 gap-4">
-                        {
-                            field.options.sort((a,b) => a.name.localeCompare(b.name)).map(
-                                option => <>
-                                    <input type="checkbox" checked={option.id in field.selected} onChange={ e => {
-                                        /*
-                                        props.mutateFieldCB(field.id, "", [
-                                            ...field.options.filter(op => op.id !== option.id),
-                                            {
-                                                ...option,
-                                                selected: e.target.checked
-                                            }
-                                        ])
-                                        */
-                                    }}  />
-                                    <label>{option.name}</label>
-                                </>
-                            )
-                        }
-                    </fieldset>
-                )
+                return <MultiSelectDropdown field={field} mutateOptionsCB={props.mutateOptionsCB}/>
         }
     }
 

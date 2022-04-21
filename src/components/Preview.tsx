@@ -72,17 +72,14 @@ export default function Preview(props: {id: string, page: string}) {
         )
     };
 
-    const mutateField = (id: number, value: string, options?: {id: number, name: string, selected: boolean}[]) => {
+    const mutateField = (id: number, value: string) => {
         setFormState(oldState => {
             let field: Field = oldState.fields.filter(field => field.id === id)[0];
 
-            const newObj : Field = field.kind === "multi" ? {
-                ...field,
-                options: options ?? field.options
-            } : {
+            const newObj : Field = field.kind !== "multi" ? {
                 ...field,
                 value: value
-            }
+            } : field 
 
             return {
                 ...oldState,
@@ -92,6 +89,28 @@ export default function Preview(props: {id: string, page: string}) {
                 ].sort((a, b) => a.id - b.id)
             }
         });
+    }
+
+    const mutateOptions = (id: number, value: number, checked: boolean) => {
+        setFormState(oldState => {
+            let field: Field = oldState.fields.filter(field => field.id === id)[0];
+
+            const newObj : Field = field.kind === "multi" ? {
+                ...field,
+                selected: [
+                    ...field.selected.filter(ele => ele !== value),
+                    ...(checked ? [value] : [])
+                ]
+            } : field
+
+            return {
+                ...oldState,
+                fields: [
+                    ...oldState.fields.filter(field => field.id !== id),
+                    newObj
+                ].sort((a,b) => a.id - b.id)
+            }
+        })
     }
 
     const currentField = formState.fields[Number(props.page)];
@@ -116,7 +135,7 @@ export default function Preview(props: {id: string, page: string}) {
             </div>
 
             <div className="flex flex-col items-start gap-4">
-                <LabelledInput key={currentField.id} field={currentField} removeFieldCB={removeField} mutateFieldCB={mutateField}/>
+                <LabelledInput key={currentField.id} field={currentField} removeFieldCB={removeField} mutateFieldCB={mutateField} mutateOptionsCB={mutateOptions}/>
 
                 <Paginator fields={formState.fields} id={id} current={Number(props.page)}/>
             </div>

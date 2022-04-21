@@ -44,7 +44,7 @@ export default function DynamicForm(props : {
                     key={index}
                     type="text"
                     value={field}
-                    className="border-2 border-gray-200 rounded-lg p-2 w-full"
+                    className="border-2 border-gray-200 rounded-lg p-2 w-full last:opacity-50"
                     onChange={handleInput(index)} 
                 />)
             }
