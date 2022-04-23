@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react"
+import { useEffect, useReducer } from "react"
 import Field from "../interfaces/Field";
 
 import LabelledInput from "./LabelledInput";
 import Cancel from "../cancel.svg";
 import { previewState, getLocalPreviews, saveLocalPreviews } from "../State";
 import { Link } from "raviger";
+
+import {reducer} from "../interfaces/Actions"
 
 interface FormData {
     id: number,
@@ -41,7 +43,7 @@ function Paginator(props: {id: number, fields: Field[], current: number}) {
 
 export default function Preview(props: {id: string, page: string}) {
     const id = Number(props.id)
-    const [formState, setFormState] = useState(() => previewState(id));
+    const [formState, dispatchAction] = useReducer(reducer, null, () => previewState(id))
 
     useEffect(() => {
         const oldTitle = document.title;
@@ -62,56 +64,6 @@ export default function Preview(props: {id: string, page: string}) {
             clearTimeout(timeout);
         }
     }, [formState])
-
-    const removeField = (id: number) => {
-        setFormState(
-            {
-                ...formState,
-                fields: formState.fields.filter(field => field.id !== id)
-            }
-        )
-    };
-
-    const mutateField = (id: number, value: string) => {
-        setFormState(oldState => {
-            let field: Field = oldState.fields.filter(field => field.id === id)[0];
-
-            const newObj : Field = field.kind !== "multi" ? {
-                ...field,
-                value: value
-            } : field 
-
-            return {
-                ...oldState,
-                fields: [
-                    ...oldState.fields.filter(field => field.id !== id),
-                    newObj
-                ].sort((a, b) => a.id - b.id)
-            }
-        });
-    }
-
-    const mutateOptions = (id: number, value: number, checked: boolean) => {
-        setFormState(oldState => {
-            let field: Field = oldState.fields.filter(field => field.id === id)[0];
-
-            const newObj : Field = field.kind === "multi" ? {
-                ...field,
-                selected: [
-                    ...field.selected.filter(ele => ele !== value),
-                    ...(checked ? [value] : [])
-                ]
-            } : field
-
-            return {
-                ...oldState,
-                fields: [
-                    ...oldState.fields.filter(field => field.id !== id),
-                    newObj
-                ].sort((a,b) => a.id - b.id)
-            }
-        })
-    }
 
     const currentField = formState.fields[Number(props.page)];
 
@@ -135,7 +87,25 @@ export default function Preview(props: {id: string, page: string}) {
             </div>
 
             <div className="flex flex-col items-start gap-4">
-                <LabelledInput key={currentField.id} field={currentField} removeFieldCB={removeField} mutateFieldCB={mutateField} mutateOptionsCB={mutateOptions}/>
+                <LabelledInput 
+                    key={currentField.id}
+                    field={currentField}
+                    mutateFieldCB={(id: number, value: string) => dispatchAction({
+                        actionType: "mutate_field",
+                        id: id,
+                        kind: currentField.kind,
+                        value: value
+                    })}
+                    mutateOptionsCB={(id: number, value: number, checked: boolean) => dispatchAction({
+                        actionType: "mutate_field",
+                        id: id,
+                        kind: "multi",
+                        check: {
+                            id: value,
+                            checked: checked
+                        }
+                    })}
+                />
 
                 <Paginator fields={formState.fields} id={id} current={Number(props.page)}/>
             </div>

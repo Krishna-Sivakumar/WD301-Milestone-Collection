@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useReducer } from "react"
 import Field from "./interfaces/Field";
 
 import Header from "./components/Header"
-import Cancel from "./cancel.svg";
+import Cancel from "./cancel.svg"
 import { getLocalForms, saveLocalForms } from "./State";
 import { Link } from "raviger";
 import FieldInput from "./components/FieldInput";
+
+import {reducer} from "./interfaces/Actions"
 
 interface FormData {
     id: number,
@@ -35,7 +37,6 @@ const saveForm = (currentState: FormData) => {
 
 export default function Form(props: {id?: string}) {
     const id = Number(props.id)
-    const [formState, setFormState] = useState(() => initialState(id));
     const [newField, setNewField] = useState<{
         label: string,
         type: string,
@@ -46,6 +47,8 @@ export default function Form(props: {id?: string}) {
         kind: "input"
     });
     const fieldRef = useRef<HTMLInputElement>(null)
+
+    const [formState, dispatchAction] = useReducer(reducer, null, () => initialState(id))
 
     useEffect(() => {
         const oldTitle = document.title;
@@ -66,181 +69,6 @@ export default function Form(props: {id?: string}) {
             clearTimeout(timeout);
         }
     }, [formState])
-
-    const addField = () => {
-        const generateField : () => Field = () => {
-
-            const base = {
-                id: Number(new Date()),
-                label: newField.label.length ? newField.label : "new field",
-            }
-            
-            switch (newField.kind) {
-                case "input":
-                    return {
-                        ...base,
-                        kind: "input",
-                        type: newField.type.length ? newField.type : "text",
-                        value: ""
-                    } as Field
-                case "textarea":
-                    return {
-                        ...base,
-                        kind: "textarea",
-                        value: ""
-                    } as Field
-                case "multi":
-                    return {
-                        ...base,
-                        kind: "multi",
-                        options: [],
-                        selected: []
-                    } as Field
-                case "radio":
-                    return {
-                        ...base,
-                        kind: "radio",
-                        options: []
-                    } as Field
-                case "range":
-                    return {
-                        ...base,
-                        kind: "range",
-                        max: "100",
-                        min: "0"
-                    } as Field
-            }
-        }
-
-        setFormState({
-            ...formState,
-            fields: [
-                ...formState.fields,
-                generateField()
-            ]
-        });
-
-        setNewField({label: "", type: "", kind: "input"});
-    };
-
-    const removeField = (id: number) => {
-        setFormState(
-            {
-                ...formState,
-                fields: formState.fields.filter(field => field.id !== id)
-            }
-        )
-    };
-
-    const mutateField = (param: string) => {
-        return (id: number, value: string) => {
-            setFormState(oldState => {
-                let field: Field = oldState.fields.filter(field => field.id === id)[0];
-
-                const generateNewField : () => Field = () => {
-                    switch(field.kind) {
-                        case "input": return {
-                            ...field,
-                            value: param === "value" ? value : field.value,
-                            label: param === "label" ? value : field.label,
-                            type: param === "type" ? value : field.type,
-                        }
-                        case "multi": return {
-                            ...field, // todo
-                            label: param === "label" ? value : field.label,
-                        }
-                        case "radio": return {
-                            ...field, // todo
-                            label: param === "label" ? value : field.label,
-                        }
-                        case "range": return {
-                            ...field, // todo
-                            label: param === "label" ? value : field.label,
-                        }
-                        case "textarea": return {
-                            ...field, // todo
-                            value: param === "value" ? value : field.value,
-                            label: param === "label" ? value : field.label,
-                        }
-                    }
-                }
-
-                return {
-                    ...oldState,
-                    fields: [
-                        ...oldState.fields.filter(field => field.id !== id),
-                        generateNewField()
-                    ].sort((a, b) => a.id - b.id)
-                }
-            });
-        }
-    }
-
-    const mutateFieldOptions = (id: number, value:
-        {kind: "radio", content: string[]} |
-        {kind: "multi", content: {id: number, name: string}[]}
-    ) => {
-        setFormState(oldState => {
-            let field: Field = oldState.fields.filter(field => field.id === id)[0];
-
-            const newObj = (() => {
-                switch(field.kind) {
-                    case "multi":
-                        return {
-                            ...field,
-                            options: value.kind === "multi" ? value.content : field.options
-                        }
-                    case "radio":
-                        return {
-                            ...field,
-                            options: value.kind === "radio" ? value.content : field.options
-                        }
-                    default:
-                        return field
-                }
-            })()
-            
-            return {
-                ...oldState,
-                fields: [
-                    ...oldState.fields.filter(field => field.id !== id),
-                    newObj
-                ].sort((a, b) => a.id -  b.id)
-            }
-        })
-    }
-
-    const mutateRangeField = (id: number, value: {max?: string, min?: string}) => {
-        setFormState(oldState => {
-            let field : Field = oldState.fields.filter(field => field.id === id)[0];
-
-            if (field.kind === "range") {
-
-                const newObj = {
-                    ...field,
-                    ...(value.max && {max: value.max}),
-                    ...(value.min && {min: value.min}),
-                }
-
-                return {
-                    ...oldState,
-                    fields: [
-                        ...oldState.fields.filter(field => field.id !== id),
-                        newObj
-                    ].sort((a, b) => a.id - b.id) 
-                } 
-            } else return oldState
-        })
-    }
-
-    const mutateTitle = (value: string) => {
-        setFormState(
-            oldState => ({
-                    ...oldState,
-                    title: value,
-            })
-        )
-    }
 
     const hasPreview = formState.fields.length > 0;
 
@@ -263,7 +91,10 @@ export default function Form(props: {id?: string}) {
             </Link>
             <Header
                 title={formState.title}
-                mutateTitleCB={mutateTitle}
+                mutateTitleCB={(title: string) => dispatchAction({
+                    actionType: "mutate_title",
+                    title: title
+                })}
                 id={id}
                 hasPreview = {hasPreview}
             />
@@ -273,11 +104,51 @@ export default function Form(props: {id?: string}) {
                     field => <FieldInput
                         key={field.id}
                         field={field}
-                        mutateFieldNameCB={mutateField("label")}
-                        mutateFieldTypeCB={mutateField("type")}
-                        mutateFieldOptionsCB={mutateFieldOptions}
-                        mutateRangeCB={mutateRangeField}
-                        removeFieldCB={removeField}
+                        mutateFieldNameCB={
+                            (id: number, label: string) => dispatchAction({
+                                actionType: "mutate_field",
+                                kind: field.kind,
+                                id: id,
+                                label: label
+                            })
+                        }
+                        mutateFieldTypeCB={
+                            (id: number, type: string) => dispatchAction({
+                                actionType: "mutate_field",
+                                kind: field.kind,
+                                id: id,
+                                type: type
+                            })
+                        }
+                        mutateMultiOptionsCB={
+                            (id: number, options: {id: number, name: string}[]) => dispatchAction({
+                                actionType: "mutate_field",
+                                kind: "multi",
+                                id: id,
+                                options: options
+                            })
+                        }
+                        mutateRadioOptionsCB={
+                            (id: number, options: {id: number, name: string}[]) => dispatchAction({
+                                actionType: "mutate_field",
+                                kind: "radio",
+                                id: id,
+                                options: options
+                            })
+                        }
+                        mutateRangeCB={
+                            (id: number, value: {max?: string, min?: string}) => dispatchAction({
+                                actionType: "mutate_field",
+                                kind: "range",
+                                id: id,
+                                ...( value.max !== undefined &&  {max: value.max}),
+                                ...( value.min !== undefined &&  {min: value.min}),
+                            })
+                        }
+                        removeFieldCB={() => dispatchAction({
+                            actionType: "remove_field",
+                            id: field.id
+                        })}
                     />
                 )
             }
@@ -324,7 +195,17 @@ export default function Form(props: {id?: string}) {
                     <option value="datetime-local">date and time</option>
                     <option value="number">number</option>
                 </select>}
-                <input type="button" value="Add Field" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-fit p-2 active:brightness-75 hover:brightness-95" onClick={addField} />
+                <input 
+                    type="button"
+                    value="Add Field"
+                    className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-fit p-2 active:brightness-75 hover:brightness-95" 
+                    onClick={() => dispatchAction({
+                        actionType: "add_field",
+                        label: newField.label,
+                        kind: newField.kind,
+                        type: newField.type
+                    })}
+                />
             </div>
             <div className="flex gap-2">
                 <input type="button" value="submit" className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-full p-2 active:brightness-75 hover:brightness-95 capitalize" onClick={() => {saveForm(formState); fieldRef.current?.focus()}} />

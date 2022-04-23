@@ -37,21 +37,23 @@ export const previewState: (id: number) => FormData = (id: number) => {
     }
 
     // Collect filled fields in a hashet
-    const prefilledValueSet : Record<number, string> = oldPreview.fields.reduce((prev,  curr) => {
+    const prefilledValueSet : Record<
+        number,
+        {kind: "string", value: string} | {kind: "options", value: number[]}
+    > = oldPreview.fields.reduce((prev,  curr) => {
         switch (curr.kind) {
-            case "range":
-            case "textarea":
             case "input": 
-                return {
-                    ...prev,
-                    [curr.id]: curr.value ?? ""
-                } as Record<number, string>
-            case "multi":
+            case "textarea":
             case "radio":
-            default:
+            case "range":
                 return {
                     ...prev,
-                    [curr.id]: curr.options
+                    [curr.id]: {kind: "string", value: curr.value ?? ""}
+                }
+            case "multi":
+                return {
+                    ...prev,
+                    [curr.id]: {kind: "options", value: curr.selected ?? []}
                 }
         }
     }, {});
@@ -59,19 +61,18 @@ export const previewState: (id: number) => FormData = (id: number) => {
     const preview: FormData = {
         ...formSchema,
         fields: formSchema.fields.map(field => {
+            const prefilledValue = prefilledValueSet[field.id]
             switch (field.kind) {
                 case "range":
                 case "textarea":
+                case "radio":
                 case "input": return {
                     ...field,
-                    value: prefilledValueSet[field.id] ?? "" // if field is already filled in preview, use that value. Else keep it blank.
+                    value: (prefilledValue.kind === "string") ? (prefilledValue.value ?? "") : "" // if field is already filled in preview, use that value. Else keep it blank.
                 }
                 case "multi": return {
-                    ...field, // todo
-                }
-                default:
-                case "radio": return {
-                    ...field, // todo
+                    ...field,
+                    selected: (prefilledValue.kind === "options") ? (prefilledValue.value ?? []) : []
                 }
             }
         })

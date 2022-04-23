@@ -11,7 +11,7 @@ export interface InputField extends BaseField {
 
 export interface RadioField extends BaseField {
     kind: "radio"
-    options: string[]
+    options: {id: number, name: string}[]
     value?: string
 }
 

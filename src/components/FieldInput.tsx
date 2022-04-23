@@ -6,10 +6,8 @@ export default function FieldInput(
         field: Field,
         mutateFieldNameCB: (id: number, value: string) => void,
         mutateFieldTypeCB: (id: number, value: string) => void,
-        mutateFieldOptionsCB: (id: number, value:
-            {kind: "radio", content: string[]} |
-            {kind: "multi", content: {id: number, name: string}[]}
-        ) => void,
+        mutateRadioOptionsCB: (id: number, value: {id: number, name: string}[]) => void,
+        mutateMultiOptionsCB: (id: number, value: {id: number, name: string}[]) => void,
         mutateRangeCB: (id: number, value: {max?: string, min?: string}) => void,
         removeFieldCB: (id: number) => void
     }
@@ -96,8 +94,10 @@ export default function FieldInput(
                                 <DynamicForm
                                     fields={field.options}
                                     setFields={
-                                        (fields: string[]) => 
-                                            props.mutateFieldOptionsCB(props.field.id, {kind: "radio", content: fields})
+                                        (fields: {id: number, name: string}[]) => props.mutateRadioOptionsCB(
+                                            props.field.id,
+                                            fields
+                                        )
                                     }
                                 />
                             </details>
@@ -105,15 +105,12 @@ export default function FieldInput(
                             return <details>
                                 <summary>Expand to fill in options</summary>
                                 <DynamicForm
-                                    fields={field.options.map(ele => ele.name)}
+                                    fields={field.options}
                                     setFields={
-                                        (fields: string[]) => {
-                                            props.mutateFieldOptionsCB(
+                                        (fields: {id: number, name: string}[]) => {
+                                            props.mutateMultiOptionsCB(
                                                 props.field.id,
-                                                {kind: "multi", content: fields.map(ele => ({
-                                                    id: Number(new Date()),
-                                                    name: ele
-                                                }))}
+                                                fields
                                             )
                                         }
                                     }

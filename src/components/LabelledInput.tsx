@@ -24,7 +24,7 @@ function MultiSelectDropdown(props: {
                             option => <div
                                 className="flex items-center hover:bg-blue-600 hover:text-white gap-2 rounded-md p-2"
                             >
-                                <input type="checkbox" defaultChecked={option.id in props.field.selected} onChange={ e => {
+                                <input type="checkbox" defaultChecked={props.field.selected.includes(option.id)} onChange={ e => {
                                     props.mutateOptionsCB(props.field.id, option.id, e.target.checked)
                                 }}  />
                                 <label>{option.name}</label>
@@ -38,9 +38,7 @@ function MultiSelectDropdown(props: {
 }
 
 export default function LabelledInput(props: {
-        canRemove?: boolean,
         field: Field, 
-        removeFieldCB: (id: number) => void,
         mutateFieldCB: (id: number, value: string) => void,
         mutateOptionsCB: (id: number, value: number, checked: boolean) => void
     },
@@ -95,8 +93,8 @@ export default function LabelledInput(props: {
                         {
                             field.options.map(
                                 option => <>
-                                    <label>{option}</label>
-                                    <input type="radio" className="place-self-center" name={field.label} value={option} onChange={
+                                    <label>{option.name}</label>
+                                    <input type="radio" defaultChecked={field.value === option.name} className="place-self-center" name={field.label} value={option.name} onChange={
                                         e => {
                                             props.mutateFieldCB(field.id, e.target.value)
                                         }
@@ -116,12 +114,6 @@ export default function LabelledInput(props: {
             <label className="font-semibold capitalize">{props.field.label}</label>
             <div className="flex gap-2 items-center">
                 {generateField(props.field)}
-                { props.canRemove && <input
-                    type="button"
-                    value="Remove"
-                    onClick={() => props.removeFieldCB(props.field.id)}
-                    className="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-fit p-2 active:brightness-75 hover:brightness-95"
-                />}
             </div>
         </div>
     );
