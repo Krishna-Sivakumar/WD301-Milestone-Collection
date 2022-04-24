@@ -21,8 +21,7 @@ const fetchForms = async (setForms: React.Dispatch<React.SetStateAction<APIForm[
 
 const deleteForm = async (id?: number) => {
     if (id) {
-        const res = await request(`/forms/${id}`, "DELETE", {});
-        console.log(res);
+        return await request(`/forms/${id}`, "DELETE", {});
     }
 }
 

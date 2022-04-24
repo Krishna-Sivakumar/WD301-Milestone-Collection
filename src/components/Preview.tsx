@@ -16,7 +16,6 @@ async function submitAnswers(fields: APIFormField[], form: APIForm) {
         })
     )
 
-    console.log(answers)
 
     const submission: APISubmission = {
         form: form,
@@ -24,8 +23,7 @@ async function submitAnswers(fields: APIFormField[], form: APIForm) {
     }
 
     if (form.id) {
-        const response = await request(`/forms/${form.id}/submission`, "POST", submission)
-        console.log(response)
+        return await request(`/forms/${form.id}/submission`, "POST", submission)
     }
 }
 
