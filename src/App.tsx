@@ -9,6 +9,8 @@ import { useEffect, useState } from 'react';
 import { me } from "./ApiUtils"
 import { User } from './interfaces/UserActions';
 
+import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const getCurrentUser = async (setCurrentUser: (user: User) => void) => {
   const currentUser = await me();
@@ -28,16 +30,26 @@ function App() {
 
   const [currentUser, setCurrentUser] = useState<User>(null);
 
+  const token = localStorage.getItem("token");
+
   useEffect(
     () => {
       getCurrentUser(setCurrentUser);
-    }, [localStorage.getItem("token")]
+    }, [token]
   )
 
   return (
-    <AppContainer currentUser={currentUser}>
-      {useRoutes(routes)}
-    </AppContainer>
+    <>
+      <AppContainer currentUser={currentUser}>
+        {useRoutes(routes)}
+      </AppContainer>
+      <ToastContainer
+        position="top-right"
+        theme="dark"
+        autoClose={500}
+        hideProgressBar={true}
+      />
+    </>
   );
 }
 

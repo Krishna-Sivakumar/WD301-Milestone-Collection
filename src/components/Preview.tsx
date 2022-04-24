@@ -7,6 +7,7 @@ import { Link, navigate } from "raviger";
 import {reducer} from "../interfaces/Actions"
 import { APIAnswer, APIForm, APIFormField, APISubmission } from "../interfaces/ApiTypes";
 import { getAPIForm, getAPIFormFields, mutateField, request } from "../ApiUtils";
+import { toast } from "react-toastify";
 
 async function submitAnswers(fields: APIFormField[], form: APIForm) {
     const answers: APIAnswer[] = fields.map(
@@ -61,7 +62,7 @@ export default function Preview(props: {id: string, page: string}) {
 
     useEffect(() => {
         getAPIForm(id, setForm)
-    }, [])
+    }, [id])
 
     const refreshAPIFormFields = () => {
         getAPIFormFields(id, fields => dispatchAction({
@@ -70,7 +71,7 @@ export default function Preview(props: {id: string, page: string}) {
         }))
     }
 
-    useEffect(refreshAPIFormFields, [])
+    useEffect(refreshAPIFormFields, [id])
 
     const currentField = formState[Number(props.page)];
 
@@ -112,8 +113,18 @@ export default function Preview(props: {id: string, page: string}) {
 
                 <button
                     className="flex items-center p-2 bg-slate-100 shadow-lg rounded-lg gap-2 active:shadow-sm font-bold"
-                    onClick={() => {
-                        submitAnswers(formState, form)
+                    onClick={async () => {
+                        toast.promise(
+                            submitAnswers(formState, form),
+                            {
+                                success: "Your response has been recorded!",
+                                pending: "Submitting...",
+                                error: "Server error... try again later?"
+                            },
+                            {
+                                autoClose: 1000//ms
+                            }
+                        )
                     }}
                 >
                     Submit

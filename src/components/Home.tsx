@@ -9,6 +9,7 @@ import Modal from "./Modal";
 import CreateForm from "./CreateForm";
 
 import {listForms, request} from "../ApiUtils";
+import { toast } from "react-toastify";
 
 const fetchForms = async (setForms: React.Dispatch<React.SetStateAction<APIForm[]>>) => {
     try {
@@ -27,7 +28,6 @@ const deleteForm = async (id?: number) => {
 
 export function Home() {
 
-    // const [state, setState] = useState<APIForm[]>(() => getLocalForms())
     const [state, setState] = useState<APIForm[]>([]);
     const [searchString, setSearchString] = useState("");
     const [newForm, setNewForm] = useState(false);
@@ -68,7 +68,12 @@ export function Home() {
                         </Link>
                         <button
                             className = "bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow-xl text-white font-bold active:brightness-75 hover:brightness-95 p-2 flex items-center gap-2 capitalize"
-                            onClick={async () => {await deleteForm(form.id); await fetchForms(setState)} /* removeLocalForm(form.id) */}
+                            onClick={
+                                async () => {
+                                    toast.error("Deleting Form...")
+                                    await deleteForm(form.id); await fetchForms(setState)
+                                }
+                            }
                         >
                             <BinIcon/>
                             delete
@@ -94,6 +99,7 @@ export function Home() {
             </button>
             <Modal open={newForm} closeCB={() => setNewForm(false)}>
                 <CreateForm callback={async () => {
+                    toast.success("Creating form")
                     await setNewForm(false);
                     await fetchForms(setState);
                 }}/>

@@ -8,6 +8,7 @@ import FieldInput from "./components/FieldInput";
 import {reducer} from "./interfaces/Actions"
 import { APIForm } from "./interfaces/ApiTypes";
 import { getAPIFormFields, getAPIForm, createNewField, mutateField, deleteField } from "./ApiUtils";
+import { toast } from "react-toastify";
 
 
 export default function Form(props: {id?: string}) {
@@ -36,8 +37,9 @@ export default function Form(props: {id?: string}) {
     }, [])
 
     useEffect(() => {
+        toast.info("Fetching your form...")
         getAPIForm(id, setForm)
-    }, [])
+    }, [id])
 
     const refreshAPIFormFields = () => {
         getAPIFormFields(id, fields => dispatchAction({
@@ -46,7 +48,7 @@ export default function Form(props: {id?: string}) {
         }))
     }
 
-    useEffect(refreshAPIFormFields, [])
+    useEffect(refreshAPIFormFields, [id])
 
 
     const hasPreview = formState.length > 0;

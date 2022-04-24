@@ -1,5 +1,6 @@
 import { navigate } from "raviger";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { request } from "./ApiUtils"
 
 export default function Login() {
@@ -20,11 +21,14 @@ export default function Login() {
         event.preventDefault()
         await setLock(true);
         try {
+            toast("Logging you in...")
             const res : {token: string} = await request("/auth-token", "POST", formState)
             if (res.token) {
                 localStorage.setItem("token", res.token);
                 navigate("/");
+                toast.success("Logged in!");
             } else {
+                toast.error("Invalid credentials; Try again.")
                 setFormState({username: "", password: ""});
                 setLock(false);
             }
