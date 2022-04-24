@@ -1,16 +1,13 @@
 import { useState } from "react";
 
 export default function DynamicForm(props : {
-    fields: {id: number, name: string}[]
-    setFields: (fields: {id: number, name: string}[]) => void
+    fields: string[]
+    setFields: (fields: string[]) => void
 }) {
     const [state, setState] = useState(() => {
         return [
             ...props.fields,
-            {
-                id: Number(new Date()),
-                name: ""
-            }
+            ""
         ]
     })
 
@@ -18,15 +15,15 @@ export default function DynamicForm(props : {
         return ((event : React.ChangeEvent<HTMLInputElement>) => {
             setState(state => {
                 const strippedFields = state
-                    .map(ele => index === ele.id ? {...ele, name: event.target.value} : ele)
+                    .map((ele, idx) => index === idx ? event.target.value : ele)
                     .reverse()
                     .reduce(
                         (prev, curr) => {
-                            if (curr.name.length > 0 || prev.length > 0)
+                            if (curr.length > 0 || prev.length > 0)
                                 return [...prev, curr];
                             else
                                 return prev;
-                        }, [] as {id: number, name: string}[]
+                        }, [] as string[]
                     )
                     .reverse();
 
@@ -34,8 +31,8 @@ export default function DynamicForm(props : {
 
                 return [
                     ...strippedFields,
-                    ...(strippedFields.length === 0 || strippedFields[strippedFields.length - 1].name.length > 0 ? [{id: Number(new Date()), name: ""}] : [])
-                ];
+                    ...(strippedFields.length === 0 || strippedFields[strippedFields.length - 1].length > 0 ? [""] : [])
+                ]
             })
         })
     }
@@ -43,12 +40,12 @@ export default function DynamicForm(props : {
     return (
         <div className="flex flex-col gap-2">
             {
-                state.map((field) => <input
-                    key={field.id}
+                state.map((field, idx) => <input
+                    key={idx}
                     type="text"
-                    value={field.name}
+                    value={field}
                     className="border-2 border-gray-200 rounded-lg p-2 w-full last:opacity-50 last:border-dashed"
-                    onChange={handleInput(field.id)}
+                    onChange={handleInput(idx)}
                 />)
             }
         </div>

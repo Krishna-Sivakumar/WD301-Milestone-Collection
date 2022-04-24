@@ -1,28 +1,35 @@
-import { useEffect, useReducer } from "react"
-import Field from "../interfaces/Field";
+import { useEffect, useReducer, useState } from "react"
 
 import LabelledInput from "./LabelledInput";
-import Cancel from "../cancel.svg";
-import { previewState, getLocalPreviews, saveLocalPreviews } from "../State";
-import { Link } from "raviger";
+import Cancel from "../icons/cancel.svg";
+import { Link, navigate } from "raviger";
 
 import {reducer} from "../interfaces/Actions"
+import { APIAnswer, APIForm, APIFormField, APISubmission } from "../interfaces/ApiTypes";
+import { getAPIForm, getAPIFormFields, mutateField, request } from "../ApiUtils";
 
-interface FormData {
-    id: number,
-    title: string,
-    fields: Field[]
+async function submitAnswers(fields: APIFormField[], form: APIForm) {
+    const answers: APIAnswer[] = fields.map(
+        field => ({
+            form_field: field.id || 0,
+            value: field.value || ""
+        })
+    )
+
+    console.log(answers)
+
+    const submission: APISubmission = {
+        form: form,
+        answers: answers
+    }
+
+    if (form.id) {
+        const response = await request(`/forms/${form.id}/submission`, "POST", submission)
+        console.log(response)
+    }
 }
 
-const savePreview = (currentState: FormData) => {
-    const localPreviews = getLocalPreviews();
-    const updatedLocalPreviews = localPreviews.map(form => (
-        form.id === currentState.id ? currentState : form
-    ));
-    saveLocalPreviews(updatedLocalPreviews);
-}
-
-function Paginator(props: {id: number, fields: Field[], current: number}) {
+function Paginator(props: {id: number, fields: APIFormField[], current: number}) {
     return (
         <div className="flex rounded-lg shadow-lg">
             {
@@ -43,31 +50,33 @@ function Paginator(props: {id: number, fields: Field[], current: number}) {
 
 export default function Preview(props: {id: string, page: string}) {
     const id = Number(props.id)
-    const [formState, dispatchAction] = useReducer(reducer, null, () => previewState(id))
+    const [formState, dispatchAction] = useReducer(reducer, [])
+    const [form, setForm] = useState<APIForm>({
+        id: 0,
+        title: ""
+    });
 
     useEffect(() => {
-        const oldTitle = document.title;
-        document.title = `${oldTitle} | ${formState.title}`;
-
-        return () => {
-            document.title = oldTitle;
-        }
-    }, [formState.title])
+        const token = localStorage.getItem("token");
+        if (!token) navigate("/login");
+    }, [])
 
     useEffect(() => {
-        let timeout = setTimeout(() => {
-            savePreview(formState);
-        }, 200);
+        getAPIForm(id, setForm)
+    }, [])
 
+    const refreshAPIFormFields = () => {
+        getAPIFormFields(id, fields => dispatchAction({
+            actionType: "set_fields",
+            fields: fields
+        }))
+    }
 
-        return () => {
-            clearTimeout(timeout);
-        }
-    }, [formState])
+    useEffect(refreshAPIFormFields, [])
 
-    const currentField = formState.fields[Number(props.page)];
+    const currentField = formState[Number(props.page)];
 
-    if (formState.fields.length === 0)
+    if (formState.length === 0)
         return (
             <p className="text-2xl text-gray-600 font-bold">
                 This form isn't ready yet.
@@ -83,31 +92,34 @@ export default function Preview(props: {id: string, page: string}) {
             </Link>
 
             <div className="flex gap-2 items-center">
-                <p className="w-full font-bold text-2xl">{formState.title}</p>
+                <p className="w-full font-bold text-2xl">{form.title}</p>
             </div>
 
             <div className="flex flex-col items-start gap-4">
                 <LabelledInput 
                     key={currentField.id}
                     field={currentField}
-                    mutateFieldCB={(id: number, value: string) => dispatchAction({
-                        actionType: "mutate_field",
-                        id: id,
-                        kind: currentField.kind,
-                        value: value
-                    })}
-                    mutateOptionsCB={(id: number, value: number, checked: boolean) => dispatchAction({
-                        actionType: "mutate_field",
-                        id: id,
-                        kind: "multi",
-                        check: {
-                            id: value,
-                            checked: checked
-                        }
-                    })}
+                    mutateFieldCB={async (fieldId: number, value: string) => {
+                        dispatchAction({
+                            actionType: "mutate_field",
+                            id: fieldId,
+                            kind: currentField.kind,
+                            value: value,
+                            callback: (field) => mutateField(id, field)
+                        });
+                    }}
                 />
 
-                <Paginator fields={formState.fields} id={id} current={Number(props.page)}/>
+                <Paginator fields={formState} id={id} current={Number(props.page)}/>
+
+                <button
+                    className="flex items-center p-2 bg-slate-100 shadow-lg rounded-lg gap-2 active:shadow-sm font-bold"
+                    onClick={() => {
+                        submitAnswers(formState, form)
+                    }}
+                >
+                    Submit
+                </button>
             </div>
         </>
     );

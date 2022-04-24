@@ -1,39 +1,49 @@
-import { useState } from "react";
-import FormData from "../interfaces/FormData";
+import { useEffect, useState } from "react";
 import BinIcon from "../icons/BinIcon";
 import OpenIcon from "../icons/OpenIcon";
-import { getLocalForms, saveLocalForms } from "../State";
-import { Link, useQueryParams } from "raviger";
+import { Link, navigate, useQueryParams } from "raviger";
+
+import { APIForm, Pagination } from "../interfaces/ApiTypes"
+
+import Modal from "./Modal";
+import CreateForm from "./CreateForm";
+
+import {listForms, request} from "../ApiUtils";
+
+const fetchForms = async (setForms: React.Dispatch<React.SetStateAction<APIForm[]>>) => {
+    try {
+        const data: Pagination<APIForm> = await listForms({offset: 5, limit: 10});
+        setForms(data.results)
+    } catch(error) {
+        console.log(error)
+    }
+}
+
+const deleteForm = async (id?: number) => {
+    if (id) {
+        const res = await request(`/forms/${id}`, "DELETE", {});
+        console.log(res);
+    }
+}
 
 export function Home() {
 
-    const [state, setState] = useState(() => getLocalForms())
+    // const [state, setState] = useState<APIForm[]>(() => getLocalForms())
+    const [state, setState] = useState<APIForm[]>([]);
     const [searchString, setSearchString] = useState("");
+    const [newForm, setNewForm] = useState(false);
 
     const [queryParams, setQueryParams] = useQueryParams();
     const {search=""} = queryParams;
 
-    const addLocalForm = () => {
-        const newForm: FormData = {
-            id: Number(new Date()),
-            title: "Form",
-            fields: [],
-        }
+    useEffect(() => {
+        fetchForms(setState);
+    }, [])
 
-        saveLocalForms([
-            ...state,
-            newForm
-        ])
-
-        setState(getLocalForms());
-    }
-
-    const removeLocalForm = (id: number) => {
-        saveLocalForms(
-            state.filter(form => form.id !== id)
-        )
-        setState(getLocalForms());
-    }
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) navigate("/login");
+    })
 
     const filteredState = search ? state.filter(form => form.title.toLowerCase().indexOf(search.toLowerCase()) !== -1) : state;
 
@@ -59,7 +69,7 @@ export function Home() {
                         </Link>
                         <button
                             className = "bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow-xl text-white font-bold active:brightness-75 hover:brightness-95 p-2 flex items-center gap-2 capitalize"
-                            onClick={() => removeLocalForm(form.id)}
+                            onClick={async () => {await deleteForm(form.id); await fetchForms(setState)} /* removeLocalForm(form.id) */}
                         >
                             <BinIcon/>
                             delete
@@ -75,10 +85,20 @@ export function Home() {
 
             <button
                 className = "bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-xl text-white font-bold w-full active:brightness-75 hover:brightness-95 py-2 my-2"
-                onClick={addLocalForm}
+                onClick={
+                    e => {
+                        setNewForm(true)
+                    }
+                }
             >
                 New
             </button>
+            <Modal open={newForm} closeCB={() => setNewForm(false)}>
+                <CreateForm callback={async () => {
+                    await setNewForm(false);
+                    await fetchForms(setState);
+                }}/>
+            </Modal>
         </div>
     );
 }
