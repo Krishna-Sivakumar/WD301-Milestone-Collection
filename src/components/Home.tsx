@@ -26,7 +26,7 @@ const deleteForm = async (id?: number) => {
     }
 }
 
-export function Home() {
+export default function Home() {
 
     const [state, setState] = useState<APIForm[]>([]);
     const [searchString, setSearchString] = useState("");
